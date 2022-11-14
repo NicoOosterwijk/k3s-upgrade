@@ -1,0 +1,72 @@
+---
+apiVersion: upgrade.cattle.io/v1
+kind: Plan
+
+metadata:
+  # De naam geeft aan om welk K3s component het gaat. Wordt tevens gebruikt in prepare op de workers.
+  name: k3s-server
+
+  # De namespace is waar de system-upgrade-controller deployed wordt.
+  namespace: system-upgrade
+
+spec:
+  # Het maximaal aantal nodes dat tegelijkertijd wordt ge-update.
+  concurrency: 1
+
+  # De versie de gebruikt wordt om de nodes te upgraden.
+  version: v1.21.3-k3s1
+
+  # Gebruikt om ook de master-node te kunnen upgraden.
+  # tolerations:
+  #   - key: "node-role.kubernetes.io/master"
+  #     operator: "Exists"
+  #     effect: "NoSchedule"
+
+  # Geef aan welke nodes voor de upgrade in aanmerking komen.
+  nodeSelector:
+    matchExpressions:
+      - {key: k3s-upgrade, operator: NotIn, values: ["disabled", "false"]}
+      - {key: k3s-upgrade, operator: Exists}
+      - {key: node-role.kubernetes.io/master, operator: In, values: ["true"]}
+  
+  # De te gebruiken service-account met de juiste rechten.
+  serviceAccountName: system-upgrade
+
+  # Keuze uit de node drainen of cordonen
+  #drain:
+  #  force: true
+  cordon: true
+
+  # Geef aan welke image geebruikt wordt voor de upgrade.
+  upgrade:
+    image: rancher/k3s-upgrade
+
+---
+apiVersion: upgrade.cattle.io/v1
+kind: Plan
+metadata:
+  name: k3s-agent
+  namespace: system-upgrade
+spec:
+  concurrency: 1
+  version: v1.21.3-k3s1
+  nodeSelector:
+    matchExpressions:
+      - {key: k3s-upgrade, operator: NotIn, values: ["disabled", "false"]}
+      - {key: k3s-upgrade, operator: Exists}
+      - {key: node-role.kubernetes.io/master, operator: DoesNotExist}
+  serviceAccountName: system-upgrade
+
+  # Prepare is de stap die gedaan wordt voordat de node drained of cordoned wordt.
+  prepare:
+    image: rancher/k3s-upgrade
+    args: ["prepare", "k3s-server"]
+  drain:
+    # deleteLocalData: true  # default
+    # ignoreDaemonSets: true # default
+    force: true
+    skipWaitForDeleteTimeout: 60
+  #cordon: true
+  upgrade:
+    image: rancher/k3s-upgrade
+

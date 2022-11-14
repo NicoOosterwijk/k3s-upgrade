@@ -1,0 +1,37 @@
+---
+apiVersion: upgrade.cattle.io/v1
+kind: Plan
+
+metadata:
+  name: apt-upgrade
+  namespace: system-upgrade
+
+spec:
+  concurrency: 1
+  version: focal
+
+#  tolerations:
+#    - key: "node-role.kubernetes.io/master"
+#      operator: "Exists"
+#      effect: "NoSchedule"
+  
+  nodeSelector:
+    matchExpressions:
+      - {key: apt-upgrade, operator: In, values: ["enabled"]}
+      - {key: apt-upgrade, operator: Exists}
+  
+  serviceAccountName: system-upgrade
+  
+  secrets:
+    - name: apt-upgrade
+      path: /host/run/system-upgrade/secrets/apt-update
+  
+  drain:
+    # deleteLocalData: true  # default
+    # ignoreDaemonSets: true # default
+    force: true
+  
+  upgrade:
+    image: ubuntu
+    command: ["chroot", "/host"]
+    args: ["sh", "/run/system-upgrade/secrets/apt-update/upgrade.sh"]
