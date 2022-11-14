@@ -1,5 +1,6 @@
 ## K3s System Upgrade Controller
 
+TL;DR
 ```
 kustomize build github.com/rancher/system-upgrade-controller | kubectl apply -f - 
 ```
