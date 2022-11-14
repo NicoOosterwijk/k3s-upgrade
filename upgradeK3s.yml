@@ -14,7 +14,12 @@ spec:
   concurrency: 1
 
   # De versie de gebruikt wordt om de nodes te upgraden.
-  version: v1.21.3-k3s1
+  version: v1.25.3-k3s1
+
+  # In plaats van bovenstaande version, kan ook een channel gebruikt worden. Hierdoor
+  # wordt getracht een nieuwe versie te vinden die dan geïnstalleerd wordt.
+  # Met deze methode zal de cluster altijd met de laatste stable release draaien.
+  #channel: https://update.k3s.io/v1-release/channels/stable
 
   # Gebruikt om ook de master-node te kunnen upgraden.
   # tolerations:
@@ -49,7 +54,7 @@ metadata:
   namespace: system-upgrade
 spec:
   concurrency: 1
-  version: v1.21.3-k3s1
+  version: v1.25.3-k3s1
   nodeSelector:
     matchExpressions:
       - {key: k3s-upgrade, operator: NotIn, values: ["disabled", "false"]}
